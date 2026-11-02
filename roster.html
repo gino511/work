@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>隨機排班</title>
+<style>
+:root{
+  --bg:#eef2ec; --card:#ffffff; --ink:#1c2a22; --sub:#5d6d63; --line:#06c755; --line-ink:#ffffff;
+  --btn:#1c2a22; --btn-ink:#f4f7f2; --edge:#d3dcd2; --chip:#e3ebe1;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121a15; --card:#1b251f; --ink:#e8f0ea; --sub:#93a498; --btn:#e8f0ea; --btn-ink:#121a15; --edge:#2b3a31; --chip:#24322a;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121a15; --card:#1b251f; --ink:#e8f0ea; --sub:#93a498; --btn:#e8f0ea; --btn-ink:#121a15; --edge:#2b3a31; --chip:#24322a;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;min-height:100vh;display:flex;justify-content:center}
+main{width:100%;max-width:460px;padding:28px 18px 40px}
+h1{font-size:26px;margin:0 0 4px;letter-spacing:.04em}
+p.hint{margin:0 0 20px;color:var(--sub);font-size:14px}
+.names{display:flex;gap:8px;margin-bottom:16px}
+.names input{flex:1;min-width:0;font:inherit;font-size:20px;text-align:center;padding:10px 4px;border:1.5px solid var(--edge);border-radius:10px;background:var(--card);color:var(--ink)}
+.names input:focus-visible,button:focus-visible,a.btn:focus-visible{outline:3px solid var(--line);outline-offset:2px}
+button,a.btn{font:inherit;cursor:pointer;border:0;border-radius:12px;padding:14px 16px;font-size:17px;font-weight:600;text-align:center;text-decoration:none;display:block;width:100%}
+#go{background:var(--btn);color:var(--btn-ink);font-size:20px;padding:18px}
+#go:active{transform:scale(.98)}
+.result{margin:20px 0 14px;background:var(--card);border:1.5px solid var(--edge);border-radius:14px;padding:6px 0;min-height:84px}
+.row{display:flex;align-items:center;gap:14px;padding:12px 20px;font-size:30px;font-weight:700}
+.row+.row{border-top:1px solid var(--edge)}
+.row .n{font-size:15px;font-weight:600;color:var(--sub);background:var(--chip);border-radius:50%;width:26px;height:26px;display:grid;place-items:center}
+.row.pop{animation:pop .28s ease-out both}
+@keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.row.pop{animation:none}}
+.empty{color:var(--sub);text-align:center;padding:26px 10px;font-size:15px}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#copy{background:var(--chip);color:var(--ink)}
+a.btn.line{background:var(--line);color:var(--line-ink)}
+.actions [disabled],a.btn[aria-disabled="true"]{opacity:.4;pointer-events:none}
+#msg{min-height:20px;margin-top:12px;font-size:14px;color:var(--sub);text-align:center}
+</style>
+</head>
+<body>
+<main>
+  <h1>隨機排班</h1>
+  <p class="hint">名字可以直接改，按一下重新排。</p>
+  <div class="names" id="names">
+    <input value="賢" aria-label="名字 1" maxlength="8">
+    <input value="商" aria-label="名字 2" maxlength="8">
+    <input value="石" aria-label="名字 3" maxlength="8">
+    <input value="逸" aria-label="名字 4" maxlength="8">
+  </div>
+  <button id="go">隨機排班</button>
+  <div class="result" id="result"><div class="empty">按上面的按鈕開始</div></div>
+  <div class="actions">
+    <button id="copy" disabled>複製</button>
+    <a class="btn line" id="line" href="#" target="_blank" rel="noopener" aria-disabled="true">傳到 LINE</a>
+  </div>
+  <div id="msg" role="status"></div>
+</main>
+<script>
+(function(){
+  var go=document.getElementById('go'),res=document.getElementById('result'),
+      copyBtn=document.getElementById('copy'),lineBtn=document.getElementById('line'),
+      msg=document.getElementById('msg'),inputs=document.querySelectorAll('#names input');
+  var text='';
+
+  function rand(n){
+    try{var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n;}catch(e){return Math.floor(Math.random()*n);}
+  }
+  function shuffle(arr){
+    for(var i=arr.length-1;i>0;i--){var j=rand(i+1);var t=arr[i];arr[i]=arr[j];arr[j]=t;}
+    return arr;
+  }
+  function render(list){
+    res.innerHTML='';
+    list.forEach(function(name,i){
+      var d=document.createElement('div');d.className='row pop';d.style.animationDelay=(i*70)+'ms';
+      d.innerHTML='<span class="n">'+(i+1)+'</span><span></span>';
+      d.lastChild.textContent=name;
+      res.appendChild(d);
+    });
+  }
+  go.addEventListener('click',function(){
+    var names=[].map.call(inputs,function(i){return i.value.trim();}).filter(Boolean);
+    if(names.length<2){msg.textContent='至少要有兩個名字。';return;}
+    var order=shuffle(names.slice());
+    render(order);
+    text=order.join('\n');
+    copyBtn.disabled=false;
+    lineBtn.removeAttribute('aria-disabled');
+    lineBtn.href='https://line.me/R/msg/text/?'+encodeURIComponent(text);
+    msg.textContent='';
+  });
+  copyBtn.addEventListener('click',function(){
+    function ok(){msg.textContent='已複製，貼到 LINE 就可以了。';}
+    function fallback(){
+      var ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+      document.body.appendChild(ta);ta.select();
+      try{document.execCommand('copy')?ok():msg.textContent='複製失敗，請改用傳到 LINE。';}catch(e){msg.textContent='複製失敗，請改用傳到 LINE。';}
+      document.body.removeChild(ta);
+    }
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(ok,fallback);}else{fallback();}
+  });
+})();
+</script>
+</body>
+</html>
