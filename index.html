@@ -26,11 +26,13 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans TC","
 main{width:100%;max-width:460px;padding:28px 18px 40px}
 h1{font-size:26px;margin:0 0 4px;letter-spacing:.04em}
 p.hint{margin:0 0 20px;color:var(--sub);font-size:14px}
-.names{display:flex;gap:8px;margin-bottom:16px}
+.grp{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.tag{width:40px;font-size:14px;color:var(--sub)}
+.names{flex:1;display:flex;gap:8px}
 .names input{flex:1;min-width:0;font:inherit;font-size:20px;text-align:center;padding:10px 4px;border:1.5px solid var(--edge);border-radius:10px;background:var(--card);color:var(--ink)}
 .names input:focus-visible,button:focus-visible,a.btn:focus-visible{outline:3px solid var(--line);outline-offset:2px}
 button,a.btn{font:inherit;cursor:pointer;border:0;border-radius:12px;padding:14px 16px;font-size:17px;font-weight:600;text-align:center;text-decoration:none;display:block;width:100%}
-#go{background:var(--btn);color:var(--btn-ink);font-size:20px;padding:18px}
+#go{background:var(--btn);color:var(--btn-ink);font-size:20px;padding:18px;margin-top:8px}
 #go:active{transform:scale(.98)}
 .result{margin:20px 0 14px;background:var(--card);border:1.5px solid var(--edge);border-radius:14px;padding:6px 0;min-height:84px}
 .row{display:flex;align-items:center;gap:14px;padding:12px 20px;font-size:30px;font-weight:700}
@@ -50,12 +52,20 @@ a.btn.line{background:var(--line);color:var(--line-ink)}
 <body>
 <main>
   <h1>隨機排班</h1>
-  <p class="hint">名字可以直接改，按一下重新排。</p>
-  <div class="names" id="names">
-    <input value="賢" aria-label="名字 1" maxlength="8">
-    <input value="商" aria-label="名字 2" maxlength="8">
-    <input value="石" aria-label="名字 3" maxlength="8">
-    <input value="逸" aria-label="名字 4" maxlength="8">
+  <p class="hint">外籍和台灣輪流排，最後一位一定是台灣。</p>
+  <div class="grp">
+    <span class="tag">外籍</span>
+    <div class="names" id="foreign">
+      <input value="商" aria-label="外籍 1" maxlength="8">
+      <input value="石" aria-label="外籍 2" maxlength="8">
+    </div>
+  </div>
+  <div class="grp">
+    <span class="tag">台灣</span>
+    <div class="names" id="local">
+      <input value="賢" aria-label="台灣 1" maxlength="8">
+      <input value="逸" aria-label="台灣 2" maxlength="8">
+    </div>
   </div>
   <button id="go">隨機排班</button>
   <div class="result" id="result"><div class="empty">按上面的按鈕開始</div></div>
@@ -69,7 +79,7 @@ a.btn.line{background:var(--line);color:var(--line-ink)}
 (function(){
   var go=document.getElementById('go'),res=document.getElementById('result'),
       copyBtn=document.getElementById('copy'),lineBtn=document.getElementById('line'),
-      msg=document.getElementById('msg'),inputs=document.querySelectorAll('#names input');
+      msg=document.getElementById('msg');
   var text='';
 
   function rand(n){
@@ -78,6 +88,9 @@ a.btn.line{background:var(--line);color:var(--line-ink)}
   function shuffle(arr){
     for(var i=arr.length-1;i>0;i--){var j=rand(i+1);var t=arr[i];arr[i]=arr[j];arr[j]=t;}
     return arr;
+  }
+  function vals(id){
+    return [].map.call(document.querySelectorAll('#'+id+' input'),function(i){return i.value.trim();}).filter(Boolean);
   }
   function render(list){
     res.innerHTML='';
@@ -89,9 +102,13 @@ a.btn.line{background:var(--line);color:var(--line-ink)}
     });
   }
   go.addEventListener('click',function(){
-    var names=[].map.call(inputs,function(i){return i.value.trim();}).filter(Boolean);
-    if(names.length<2){msg.textContent='至少要有兩個名字。';return;}
-    var order=shuffle(names.slice());
+    var f=shuffle(vals('foreign')),t=shuffle(vals('local'));
+    if(f.length+t.length<2){msg.textContent='至少要有兩個名字。';return;}
+    var order=[],n=Math.max(f.length,t.length);
+    for(var i=0;i<n;i++){
+      if(f[i])order.push(f[i]);
+      if(t[i])order.push(t[i]);
+    }
     render(order);
     text=order.join('\n');
     copyBtn.disabled=false;
