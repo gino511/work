@@ -8,6 +8,7 @@
 :root{
   --bg:#eef2ec; --card:#ffffff; --ink:#1c2a22; --sub:#5d6d63; --line:#06c755; --line-ink:#ffffff;
   --btn:#1c2a22; --btn-ink:#f4f7f2; --edge:#d3dcd2; --chip:#e3ebe1;
+  --fo:#f3e3c3; --fo-ink:#5a3f08; --tw:#d6ecd9; --tw-ink:#16502a;
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);
   padding-bottom:env(safe-area-inset-bottom,0px);
@@ -15,24 +16,34 @@
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#121a15; --card:#1b251f; --ink:#e8f0ea; --sub:#93a498; --btn:#e8f0ea; --btn-ink:#121a15; --edge:#2b3a31; --chip:#24322a;
+    --fo:#3b2f14; --fo-ink:#f0d9a6; --tw:#1f3a28; --tw-ink:#b8e6c4;
   }
 }
 :root[data-theme="dark"]{
   --bg:#121a15; --card:#1b251f; --ink:#e8f0ea; --sub:#93a498; --btn:#e8f0ea; --btn-ink:#121a15; --edge:#2b3a31; --chip:#24322a;
+  --fo:#3b2f14; --fo-ink:#f0d9a6; --tw:#1f3a28; --tw-ink:#b8e6c4;
 }
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;min-height:100vh;display:flex;justify-content:center}
 main{width:100%;max-width:460px;padding:28px 18px 40px}
 h1{font-size:26px;margin:0 0 4px;letter-spacing:.04em}
-p.hint{margin:0 0 20px;color:var(--sub);font-size:14px}
-.grp{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.tag{width:40px;font-size:14px;color:var(--sub)}
-.names{flex:1;display:flex;gap:8px}
-.names input{flex:1;min-width:0;font:inherit;font-size:20px;text-align:center;padding:10px 4px;border:1.5px solid var(--edge);border-radius:10px;background:var(--card);color:var(--ink)}
-.names input:focus-visible,button:focus-visible,a.btn:focus-visible{outline:3px solid var(--line);outline-offset:2px}
-button,a.btn{font:inherit;cursor:pointer;border:0;border-radius:12px;padding:14px 16px;font-size:17px;font-weight:600;text-align:center;text-decoration:none;display:block;width:100%}
-#go{background:var(--btn);color:var(--btn-ink);font-size:20px;padding:18px;margin-top:8px}
+p.hint{margin:0 0 18px;color:var(--sub);font-size:13px;line-height:1.6}
+button,a.btn,input{font:inherit}
+button{cursor:pointer;border:0}
+button:focus-visible,a.btn:focus-visible,input:focus-visible{outline:3px solid var(--line);outline-offset:2px}
+button[disabled]{opacity:.4;pointer-events:none}
+.p{display:grid;grid-template-columns:1fr 62px auto 34px;gap:8px;align-items:center;margin-bottom:8px}
+.nm{min-width:0;font-size:20px;text-align:center;padding:9px 4px;border:1.5px solid var(--edge);border-radius:10px;background:var(--card);color:var(--ink)}
+.tp{border-radius:10px;padding:11px 0;font-size:15px;font-weight:600}
+.tp.fo{background:var(--fo);color:var(--fo-ink)}
+.tp.tw{background:var(--tw);color:var(--tw-ink)}
+.nl{display:flex;align-items:center;gap:4px;font-size:13px;color:var(--sub);white-space:nowrap}
+.nl input{width:18px;height:18px;accent-color:var(--line)}
+.del{width:34px;height:34px;border-radius:50%;background:var(--chip);color:var(--sub);font-size:14px}
+.big{display:block;width:100%;border-radius:12px;padding:14px 16px;font-size:17px;font-weight:600;text-align:center;text-decoration:none}
+#add{background:var(--chip);color:var(--ink);margin:4px 0 10px;font-size:15px;padding:11px}
+#go{background:var(--btn);color:var(--btn-ink);font-size:20px;padding:18px}
 #go:active{transform:scale(.98)}
 .result{margin:20px 0 14px;background:var(--card);border:1.5px solid var(--edge);border-radius:14px;padding:6px 0;min-height:84px}
 .row{display:flex;align-items:center;gap:14px;padding:12px 20px;font-size:30px;font-weight:700}
@@ -45,53 +56,104 @@ button,a.btn{font:inherit;cursor:pointer;border:0;border-radius:12px;padding:14p
 .actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 #copy{background:var(--chip);color:var(--ink)}
 a.btn.line{background:var(--line);color:var(--line-ink)}
-.actions [disabled],a.btn[aria-disabled="true"]{opacity:.4;pointer-events:none}
+a.btn[aria-disabled="true"]{opacity:.4;pointer-events:none}
 #msg{min-height:20px;margin-top:12px;font-size:14px;color:var(--sub);text-align:center}
 </style>
 </head>
 <body>
 <main>
   <h1>隨機排班</h1>
-  <p class="hint">外籍和台灣輪流排，最後一位一定是台灣。</p>
-  <div class="grp">
-    <span class="tag">外籍</span>
-    <div class="names" id="foreign">
-      <input value="商" aria-label="外籍 1" maxlength="8">
-      <input value="石" aria-label="外籍 2" maxlength="8">
-    </div>
-  </div>
-  <div class="grp">
-    <span class="tag">台灣</span>
-    <div class="names" id="local">
-      <input value="賢" aria-label="台灣 1" maxlength="8">
-      <input value="逸" aria-label="台灣 2" maxlength="8">
-    </div>
-  </div>
-  <button id="go">隨機排班</button>
+  <p class="hint">點「外籍／台灣」可切換，勾「不排最後」的人不會排在最後。第二位到倒數第二位，前一位是台灣就不能再排台灣，最後一位不受限制。</p>
+  <div id="people"></div>
+  <button id="add" class="big">＋ 新增人員</button>
+  <button id="go" class="big">隨機排班</button>
   <div class="result" id="result"><div class="empty">按上面的按鈕開始</div></div>
   <div class="actions">
-    <button id="copy" disabled>複製</button>
-    <a class="btn line" id="line" href="#" target="_blank" rel="noopener" aria-disabled="true">傳到 LINE</a>
+    <button id="copy" class="big" disabled>複製</button>
+    <a class="btn big line" id="line" href="#" target="_blank" rel="noopener" aria-disabled="true">傳到 LINE</a>
   </div>
   <div id="msg" role="status"></div>
 </main>
 <script>
 (function(){
-  var go=document.getElementById('go'),res=document.getElementById('result'),
+  var KEY='roster-people-v1';
+  var box=document.getElementById('people'),add=document.getElementById('add'),
+      go=document.getElementById('go'),res=document.getElementById('result'),
       copyBtn=document.getElementById('copy'),lineBtn=document.getElementById('line'),
       msg=document.getElementById('msg');
   var text='';
 
+  function load(){
+    try{
+      var s=localStorage.getItem(KEY);if(!s)return null;
+      var a=JSON.parse(s);return Array.isArray(a)&&a.length?a:null;
+    }catch(e){return null;}
+  }
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(people));}catch(e){}}
+
+  var people=load()||[
+    {n:'賢',t:1,l:0},
+    {n:'商',t:0,l:1},
+    {n:'石',t:0,l:0},
+    {n:'逸',t:1,l:0}
+  ];
+
   function rand(n){
     try{var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n;}catch(e){return Math.floor(Math.random()*n);}
   }
-  function shuffle(arr){
-    for(var i=arr.length-1;i>0;i--){var j=rand(i+1);var t=arr[i];arr[i]=arr[j];arr[j]=t;}
-    return arr;
+
+  function draw(){
+    box.innerHTML='';
+    people.forEach(function(p,i){
+      var r=document.createElement('div');r.className='p';
+
+      var nm=document.createElement('input');
+      nm.className='nm';nm.value=p.n;nm.maxLength=8;
+      nm.setAttribute('aria-label','名字 '+(i+1));
+      nm.addEventListener('input',function(){p.n=nm.value;save();});
+
+      var tp=document.createElement('button');
+      tp.type='button';tp.className='tp '+(p.t?'tw':'fo');
+      tp.textContent=p.t?'台灣':'外籍';
+      tp.setAttribute('aria-label','切換外籍或台灣');
+      tp.addEventListener('click',function(){p.t=p.t?0:1;save();draw();});
+
+      var lb=document.createElement('label');lb.className='nl';
+      var cb=document.createElement('input');cb.type='checkbox';cb.checked=!!p.l;
+      cb.addEventListener('change',function(){p.l=cb.checked?1:0;save();});
+      lb.appendChild(cb);lb.appendChild(document.createTextNode('不排最後'));
+
+      var del=document.createElement('button');
+      del.type='button';del.className='del';del.textContent='✕';
+      del.setAttribute('aria-label','刪除');
+      del.addEventListener('click',function(){people.splice(i,1);save();draw();});
+
+      r.appendChild(nm);r.appendChild(tp);r.appendChild(lb);r.appendChild(del);
+      box.appendChild(r);
+    });
+    add.disabled=people.length>=8;
   }
-  function vals(id){
-    return [].map.call(document.querySelectorAll('#'+id+' input'),function(i){return i.value.trim();}).filter(Boolean);
+
+  function solve(list){
+    var n=list.length,out=[],used=[],cur=[];
+    function ok(p,pos){
+      if(pos===n-1)return !p.l;
+      if(pos>0&&cur[pos-1].t&&p.t)return false;
+      return true;
+    }
+    function dfs(pos){
+      if(pos===n){out.push(cur.slice());return;}
+      for(var i=0;i<n;i++){
+        if(used[i]||!ok(list[i],pos))continue;
+        used[i]=true;cur.push(list[i]);
+        dfs(pos+1);
+        cur.pop();used[i]=false;
+      }
+    }
+    dfs(0);
+    return out;
   }
+
   function render(list){
     res.innerHTML='';
     list.forEach(function(name,i){
@@ -101,14 +163,22 @@ a.btn.line{background:var(--line);color:var(--line-ink)}
       res.appendChild(d);
     });
   }
+
+  add.addEventListener('click',function(){
+    people.push({n:'',t:0,l:0});save();draw();
+    var ins=box.querySelectorAll('.nm');ins[ins.length-1].focus();
+  });
+
   go.addEventListener('click',function(){
-    var f=shuffle(vals('foreign')),t=shuffle(vals('local'));
-    if(f.length+t.length<2){msg.textContent='至少要有兩個名字。';return;}
-    var order=[],n=Math.max(f.length,t.length);
-    for(var i=0;i<n;i++){
-      if(f[i])order.push(f[i]);
-      if(t[i])order.push(t[i]);
+    var list=people.filter(function(p){return p.n.trim();})
+      .map(function(p){return {n:p.n.trim(),t:p.t,l:p.l};});
+    if(list.length<2){msg.textContent='至少要有兩個名字。';return;}
+    var all=solve(list);
+    if(!all.length){
+      msg.textContent='這組條件排不出來，檢查外籍／台灣和「不排最後」的設定。';
+      return;
     }
+    var order=all[rand(all.length)].map(function(p){return p.n;});
     render(order);
     text=order.join('\n');
     copyBtn.disabled=false;
@@ -116,6 +186,7 @@ a.btn.line{background:var(--line);color:var(--line-ink)}
     lineBtn.href='https://line.me/R/msg/text/?'+encodeURIComponent(text);
     msg.textContent='';
   });
+
   copyBtn.addEventListener('click',function(){
     function ok(){msg.textContent='已複製，貼到 LINE 就可以了。';}
     function fallback(){
@@ -126,6 +197,8 @@ a.btn.line{background:var(--line);color:var(--line-ink)}
     }
     if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(ok,fallback);}else{fallback();}
   });
+
+  draw();
 })();
 </script>
 </body>
