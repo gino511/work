@@ -27,22 +27,12 @@ html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;min-height:100vh;display:flex;justify-content:center}
 main{width:100%;max-width:460px;padding:28px 18px 40px}
-h1{font-size:26px;margin:0 0 4px;letter-spacing:.04em}
-p.hint{margin:0 0 18px;color:var(--sub);font-size:13px;line-height:1.6}
+h1{font-size:26px;margin:0 0 18px;letter-spacing:.04em}
 button,a.btn,input{font:inherit}
 button{cursor:pointer;border:0}
-button:focus-visible,a.btn:focus-visible,input:focus-visible{outline:3px solid var(--line);outline-offset:2px}
+button:focus-visible,a.btn:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--line);outline-offset:2px}
 button[disabled]{opacity:.4;pointer-events:none}
-.p{display:grid;grid-template-columns:1fr 62px auto 34px;gap:8px;align-items:center;margin-bottom:8px}
-.nm{min-width:0;font-size:20px;text-align:center;padding:9px 4px;border:1.5px solid var(--edge);border-radius:10px;background:var(--card);color:var(--ink)}
-.tp{border-radius:10px;padding:11px 0;font-size:15px;font-weight:600}
-.tp.fo{background:var(--fo);color:var(--fo-ink)}
-.tp.tw{background:var(--tw);color:var(--tw-ink)}
-.nl{display:flex;align-items:center;gap:4px;font-size:13px;color:var(--sub);white-space:nowrap}
-.nl input{width:18px;height:18px;accent-color:var(--line)}
-.del{width:34px;height:34px;border-radius:50%;background:var(--chip);color:var(--sub);font-size:14px}
 .big{display:block;width:100%;border-radius:12px;padding:14px 16px;font-size:17px;font-weight:600;text-align:center;text-decoration:none}
-#add{background:var(--chip);color:var(--ink);margin:4px 0 10px;font-size:15px;padding:11px}
 #go{background:var(--btn);color:var(--btn-ink);font-size:20px;padding:18px}
 #go:active{transform:scale(.98)}
 .result{margin:20px 0 14px;background:var(--card);border:1.5px solid var(--edge);border-radius:14px;padding:6px 0;min-height:84px}
@@ -58,14 +48,26 @@ button[disabled]{opacity:.4;pointer-events:none}
 a.btn.line{background:var(--line);color:var(--line-ink)}
 a.btn[aria-disabled="true"]{opacity:.4;pointer-events:none}
 #msg{min-height:20px;margin-top:12px;font-size:14px;color:var(--sub);text-align:center}
+details{margin-top:36px;border-top:1px solid var(--edge);padding-top:14px}
+summary{cursor:pointer;color:var(--sub);font-size:15px;padding:6px 0;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"▸ "}
+details[open] summary::before{content:"▾ "}
+p.hint{margin:10px 0 14px;color:var(--sub);font-size:13px;line-height:1.6}
+.p{display:grid;grid-template-columns:1fr 62px auto 34px;gap:8px;align-items:center;margin-bottom:8px}
+.nm{min-width:0;font-size:20px;text-align:center;padding:9px 4px;border:1.5px solid var(--edge);border-radius:10px;background:var(--card);color:var(--ink)}
+.tp{border-radius:10px;padding:11px 0;font-size:15px;font-weight:600}
+.tp.fo{background:var(--fo);color:var(--fo-ink)}
+.tp.tw{background:var(--tw);color:var(--tw-ink)}
+.nl{display:flex;align-items:center;gap:4px;font-size:13px;color:var(--sub);white-space:nowrap}
+.nl input{width:18px;height:18px;accent-color:var(--line)}
+.del{width:34px;height:34px;border-radius:50%;background:var(--chip);color:var(--sub);font-size:14px}
+#add{background:var(--chip);color:var(--ink);margin-top:4px;font-size:15px;padding:11px}
 </style>
 </head>
 <body>
 <main>
   <h1>隨機排班</h1>
-  <p class="hint">點「外籍／台灣」可切換，勾「不排最後」的人不會排在最後。第二位到倒數第二位，前一位是台灣就不能再排台灣，最後一位不受限制。</p>
-  <div id="people"></div>
-  <button id="add" class="big">＋ 新增人員</button>
   <button id="go" class="big">隨機排班</button>
   <div class="result" id="result"><div class="empty">按上面的按鈕開始</div></div>
   <div class="actions">
@@ -73,6 +75,13 @@ a.btn[aria-disabled="true"]{opacity:.4;pointer-events:none}
     <a class="btn big line" id="line" href="#" target="_blank" rel="noopener" aria-disabled="true">傳到 LINE</a>
   </div>
   <div id="msg" role="status"></div>
+
+  <details>
+    <summary>設定</summary>
+    <p class="hint">點「外籍／台灣」可切換，勾「不排最後」的人不會排在最後。第二位到倒數第二位，前一位是台灣就不能再排台灣，最後一位不受限制。</p>
+    <div id="people"></div>
+    <button id="add" class="big">＋ 新增人員</button>
+  </details>
 </main>
 <script>
 (function(){
@@ -175,7 +184,7 @@ a.btn[aria-disabled="true"]{opacity:.4;pointer-events:none}
     if(list.length<2){msg.textContent='至少要有兩個名字。';return;}
     var all=solve(list);
     if(!all.length){
-      msg.textContent='這組條件排不出來，檢查外籍／台灣和「不排最後」的設定。';
+      msg.textContent='這組條件排不出來，打開下面的設定檢查外籍／台灣和「不排最後」。';
       return;
     }
     var order=all[rand(all.length)].map(function(p){return p.n;});
