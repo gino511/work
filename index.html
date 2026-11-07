@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>竹北托運排班</title>
 <link rel="apple-touch-icon" href="icon-truck.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 240'%3E%3Crect width='240' height='240' rx='56' fill='%231c2a22'/%3E%3Crect x='56' y='62' width='128' height='28' rx='14' fill='%23f4f7f2'/%3E%3Crect x='106' y='62' width='28' height='116' rx='14' fill='%23f4f7f2'/%3E%3Crect x='40' y='150' width='160' height='28' rx='14' fill='%2306c755'/%3E%3C/svg%3E">
 <style>
 :root{
   --bg:#eef2ec; --card:#ffffff; --ink:#1c2a22; --sub:#5d6d63; --line:#06c755; --line-ink:#ffffff;
@@ -28,7 +29,13 @@ html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;min-height:100vh;display:flex;justify-content:center}
 main{width:100%;max-width:460px;padding:28px 18px 40px}
-h1{font-size:26px;margin:0 0 18px;letter-spacing:.04em}
+.brand{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.brand svg{width:48px;height:48px;flex:none}
+.lg-bg{fill:var(--btn)}
+.lg-fg{fill:var(--btn-ink)}
+.lg-ac{fill:var(--line)}
+.brand h1{margin:0;font-size:28px;line-height:1.1;letter-spacing:.04em}
+.brand span{display:block;margin-top:2px;font-size:14px;color:var(--sub);letter-spacing:.25em}
 button,a.btn,input{font:inherit}
 button{cursor:pointer;border:0}
 button:focus-visible,a.btn:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--line);outline-offset:2px}
@@ -50,11 +57,16 @@ a.btn.line{background:var(--line);color:var(--line-ink)}
 a.btn[aria-disabled="true"]{opacity:.4;pointer-events:none}
 #msg{min-height:20px;margin-top:12px;font-size:14px;color:var(--sub);text-align:center}
 details{margin-top:36px;border-top:1px solid var(--edge);padding-top:14px}
+details+details{margin-top:14px}
 summary{cursor:pointer;color:var(--sub);font-size:15px;padding:6px 0;list-style:none}
 summary::-webkit-details-marker{display:none}
 summary::before{content:"▸ "}
 details[open] summary::before{content:"▾ "}
 p.hint{margin:10px 0 14px;color:var(--sub);font-size:13px;line-height:1.6}
+.h{display:grid;grid-template-columns:1fr 34px;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid var(--edge)}
+.h small{display:block;color:var(--sub);font-size:12px;margin-bottom:2px}
+.h b{font-size:18px;letter-spacing:.08em}
+.hnone{color:var(--sub);font-size:13px;padding:10px 0}
 .p{display:grid;grid-template-columns:1fr 62px auto 34px;gap:8px;align-items:center;margin-bottom:8px}
 .nm{min-width:0;font-size:20px;text-align:center;padding:9px 4px;border:1.5px solid var(--edge);border-radius:10px;background:var(--card);color:var(--ink)}
 .tp{border-radius:10px;padding:11px 0;font-size:15px;font-weight:600}
@@ -68,7 +80,18 @@ p.hint{margin:10px 0 14px;color:var(--sub);font-size:13px;line-height:1.6}
 </head>
 <body>
 <main>
-  <h1>竹北托運排班</h1>
+  <header class="brand">
+    <svg viewBox="0 0 240 240" role="img" aria-label="工作 logo">
+      <rect class="lg-bg" width="240" height="240" rx="56"></rect>
+      <rect class="lg-fg" x="56" y="62" width="128" height="28" rx="14"></rect>
+      <rect class="lg-fg" x="106" y="62" width="28" height="116" rx="14"></rect>
+      <rect class="lg-ac" x="40" y="150" width="160" height="28" rx="14"></rect>
+    </svg>
+    <div>
+      <h1>工作</h1>
+      <span>竹北托運排班</span>
+    </div>
+  </header>
   <button id="go" class="big">隨機排班</button>
   <div class="result" id="result"><div class="empty">按上面的按鈕開始</div></div>
   <div class="actions">
@@ -76,6 +99,11 @@ p.hint{margin:10px 0 14px;color:var(--sub);font-size:13px;line-height:1.6}
     <a class="btn big line" id="line" href="#" target="_blank" rel="noopener" aria-disabled="true">傳到 LINE</a>
   </div>
   <div id="msg" role="status"></div>
+
+  <details id="histBox">
+    <summary>歷史（<span id="hc">0</span>）</summary>
+    <div id="hl"></div>
+  </details>
 
   <details>
     <summary>設定</summary>
@@ -86,30 +114,69 @@ p.hint{margin:10px 0 14px;color:var(--sub);font-size:13px;line-height:1.6}
 </main>
 <script>
 (function(){
-  var KEY='roster-people-v1';
+  var KEY='roster-people-v1',HK='roster-history-v1',LK='roster-last-v1';
   var box=document.getElementById('people'),add=document.getElementById('add'),
       go=document.getElementById('go'),res=document.getElementById('result'),
       copyBtn=document.getElementById('copy'),lineBtn=document.getElementById('line'),
-      msg=document.getElementById('msg');
-  var text='';
+      msg=document.getElementById('msg'),hl=document.getElementById('hl'),hc=document.getElementById('hc');
+  var text='',cur=null;
 
-  function load(){
-    try{
-      var s=localStorage.getItem(KEY);if(!s)return null;
-      var a=JSON.parse(s);return Array.isArray(a)&&a.length?a:null;
-    }catch(e){return null;}
+  function loadJ(k){try{var s=localStorage.getItem(k);return s?JSON.parse(s):null;}catch(e){return null;}}
+  function saveJ(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+
+  var people=loadJ(KEY);
+  if(!Array.isArray(people)||!people.length){
+    people=[{n:'賢',t:1,l:0},{n:'商',t:0,l:1},{n:'石',t:0,l:0},{n:'逸',t:1,l:0}];
   }
-  function save(){try{localStorage.setItem(KEY,JSON.stringify(people));}catch(e){}}
+  var hist=loadJ(HK);
+  if(!Array.isArray(hist))hist=[];
 
-  var people=load()||[
-    {n:'賢',t:1,l:0},
-    {n:'商',t:0,l:1},
-    {n:'石',t:0,l:0},
-    {n:'逸',t:1,l:0}
-  ];
+  function save(){saveJ(KEY,people);}
 
   function rand(n){
     try{var a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]%n;}catch(e){return Math.floor(Math.random()*n);}
+  }
+
+  function stamp(){
+    var d=new Date();
+    function p(n){return (n<10?'0':'')+n;}
+    return {w:'日一二三四五六'.charAt(d.getDay()),d:(d.getMonth()+1)+'/'+d.getDate(),t:p(d.getHours())+':'+p(d.getMinutes())};
+  }
+
+  function drawHist(){
+    hl.innerHTML='';
+    hc.textContent=hist.length;
+    if(!hist.length){
+      var e=document.createElement('div');e.className='hnone';e.textContent='還沒有紀錄，複製或傳到 LINE 後會記在這裡。';
+      hl.appendChild(e);return;
+    }
+    hist.forEach(function(h,i){
+      var r=document.createElement('div');r.className='h';
+      var c=document.createElement('div');
+      var s=document.createElement('small');
+      s.textContent='週'+h.w+' '+h.d+' '+h.t+' · '+h.how.join('、');
+      var b=document.createElement('b');b.textContent=h.o.join(' ');
+      c.appendChild(s);c.appendChild(b);
+      var del=document.createElement('button');
+      del.type='button';del.className='del';del.textContent='✕';
+      del.setAttribute('aria-label','刪除這筆紀錄');
+      del.addEventListener('click',function(){hist.splice(i,1);saveJ(HK,hist);drawHist();});
+      r.appendChild(c);r.appendChild(del);
+      hl.appendChild(r);
+    });
+  }
+
+  function logSend(how){
+    if(!cur)return;
+    if(cur.entry&&hist.indexOf(cur.entry)>=0){
+      if(cur.entry.how.indexOf(how)<0)cur.entry.how.push(how);
+    }else{
+      var s=stamp();
+      cur.entry={w:s.w,d:s.d,t:s.t,o:cur.order.slice(),how:[how]};
+      hist.unshift(cur.entry);
+      if(hist.length>60)hist.length=60;
+    }
+    saveJ(HK,hist);drawHist();
   }
 
   function draw(){
@@ -145,19 +212,19 @@ p.hint{margin:10px 0 14px;color:var(--sub);font-size:13px;line-height:1.6}
   }
 
   function solve(list){
-    var n=list.length,out=[],used=[],cur=[];
+    var n=list.length,out=[],used=[],c=[];
     function ok(p,pos){
       if(pos===n-1&&p.l)return false;
-      if(pos>0&&cur[pos-1].t&&p.t)return false;
+      if(pos>0&&c[pos-1].t&&p.t)return false;
       return true;
     }
     function dfs(pos){
-      if(pos===n){out.push(cur.slice());return;}
+      if(pos===n){out.push(c.slice());return;}
       for(var i=0;i<n;i++){
         if(used[i]||!ok(list[i],pos))continue;
-        used[i]=true;cur.push(list[i]);
+        used[i]=true;c.push(list[i]);
         dfs(pos+1);
-        cur.pop();used[i]=false;
+        c.pop();used[i]=false;
       }
     }
     dfs(0);
@@ -188,7 +255,14 @@ p.hint{margin:10px 0 14px;color:var(--sub);font-size:13px;line-height:1.6}
       msg.textContent='這組條件排不出來，打開下面的設定檢查外籍／台灣和「不排最後」。';
       return;
     }
+    var last=loadJ(LK);
+    if(last&&all.length>1){
+      var f=all.filter(function(o){return o.map(function(p){return p.n;}).join('|')!==last;});
+      if(f.length)all=f;
+    }
     var order=all[rand(all.length)].map(function(p){return p.n;});
+    saveJ(LK,order.join('|'));
+    cur={order:order,entry:null};
     render(order);
     text=order.join('\n');
     copyBtn.disabled=false;
@@ -198,17 +272,25 @@ p.hint{margin:10px 0 14px;color:var(--sub);font-size:13px;line-height:1.6}
   });
 
   copyBtn.addEventListener('click',function(){
-    function ok(){msg.textContent='已複製，貼到 LINE 就可以了。';}
+    function ok(){msg.textContent='已複製，貼到 LINE 就可以了。';logSend('複製');}
     function fallback(){
       var ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
       document.body.appendChild(ta);ta.select();
-      try{document.execCommand('copy')?ok():msg.textContent='複製失敗，請改用傳到 LINE。';}catch(e){msg.textContent='複製失敗，請改用傳到 LINE。';}
+      var done=false;
+      try{done=document.execCommand('copy');}catch(e){}
       document.body.removeChild(ta);
+      if(done)ok();else msg.textContent='複製失敗，請改用傳到 LINE。';
     }
     if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(ok,fallback);}else{fallback();}
   });
 
+  lineBtn.addEventListener('click',function(){
+    if(lineBtn.getAttribute('aria-disabled')==='true')return;
+    logSend('LINE');
+  });
+
   draw();
+  drawHist();
 })();
 </script>
 </body>
